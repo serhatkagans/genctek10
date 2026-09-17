@@ -70,7 +70,9 @@ export async function kayitliGirisYap(
   sifre: string,
   simdi: Date = new Date(),
 ): Promise<GirisSonucu> {
-  const tcKimlikNo = tcKimlikNoNormalle(tcGirdisi);
+  // Yönetici kullanıcı adı da bu alandan gelir ("Admin" yazılabilir);
+  // küçük harfe indirmek T.C. numarasını etkilemez.
+  const tcKimlikNo = tcKimlikNoNormalle(tcGirdisi).toLowerCase();
 
   const kayit =
     tcKimlikNo && sifre
