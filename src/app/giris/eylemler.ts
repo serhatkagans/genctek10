@@ -1,13 +1,84 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { guvenliDonusYolu } from "@/lib/auth/donus-yolu";
 import { oturumKapat, oturumKullanicisi } from "@/lib/auth/oturum";
 import { disKimlikliMi } from "@/lib/dis-kimlik/giris";
+import { basliklardanAnahtar, paylasilanHizSiniri } from "@/lib/hiz-siniri";
+import { kayitliGirisYap } from "@/lib/kayit/giris";
 import { girisYap } from "@/lib/kullanici/giris-akisi";
+import { ortam } from "@/lib/ortam";
 import { kimlikDogrulamaLogla } from "@/lib/yetki/log";
 
+/**
+ * Şifreli giriş hız sınırı — gerekçesi app/dis-giris/eylemler.ts'teki ile
+ * aynı (şifre püskürtmesi hesap başına kilide görünmez, her deneme scrypt
+ * çalıştırır). Sayaç veritabanında, kopyalar arasında ortak.
+ */
+const GIRIS_PENCERE_DAKIKA = 10;
+const girisSiniri = paylasilanHizSiniri({
+  kova: "kayitli-giris",
+  pencereMs: GIRIS_PENCERE_DAKIKA * 60_000,
+  sinir: 20,
+});
+
+/** Hata dönüşünde dönüş yolunu koruyan sorgu parçası. */
+function nereyeParcasi(nereye: string | null): string {
+  return nereye ? `&nereye=${encodeURIComponent(nereye)}` : "";
+}
+
+/**
+ * T.C. kimlik no + şifreyle giriş (17 Eylül 2026 · AUTH_PROVIDER="kayit").
+ *
+ * Şifre adres çubuğuna HİÇBİR KOŞULDA yazılmaz; hata dönüşünde T.C. numarası
+ * da taşınmaz — tarayıcı geçmişine ve ters vekil günlüğüne düşerdi.
+ */
+export async function sifreliGirisEylemi(veri: FormData): Promise<void> {
+  const nereye = guvenliDonusYolu(String(veri.get("nereye") ?? ""));
+
+  if (ortam.AUTH_PROVIDER !== "kayit") {
+    redirect(`/giris?hata=${encodeURIComponent("Bu giriş yolu kapalı.")}`);
+  }
+
+  if (
+    await girisSiniri.takildiMi(
+      basliklardanAnahtar(await headers(), ortam.GUVENILEN_VEKIL_SAYISI),
+    )
+  ) {
+    redirect(
+      `/giris?hata=${encodeURIComponent(
+        `Kısa sürede çok fazla giriş denemesi yapıldı. ${GIRIS_PENCERE_DAKIKA} dakika sonra tekrar deneyin.`,
+      )}${nereyeParcasi(nereye)}`,
+    );
+  }
+
+  const sonuc = await kayitliGirisYap(
+    String(veri.get("tcKimlikNo") ?? ""),
+    String(veri.get("sifre") ?? ""),
+  );
+
+  if (sonuc.durum === "BASARISIZ") {
+    redirect(
+      `/giris?hata=${encodeURIComponent(sonuc.mesaj)}${nereyeParcasi(nereye)}`,
+    );
+  }
+
+  redirect(girisSonrasiYol(sonuc, nereye));
+}
+
 export async function girisEylemi(veri: FormData): Promise<void> {
+  /*
+   * KİMLİK SEÇEREK GİRİŞ YALNIZCA MOCK KİPTE. Kayıt kipinde sağlayıcının
+   * `girisYap`'ı T.C. numarasını şifresiz kabul ediyor (şifre
+   * sifreliGirisEylemi'nde doğrulanıyor); bu eylem açık kalsaydı numarayı
+   * gönderen herkes girerdi. Sunucu eylemi doğrudan çağrılabildiği için
+   * ekrandan kaldırmak yetmez.
+   */
+  if (ortam.AUTH_PROVIDER !== "mock") {
+    redirect(`/giris?hata=${encodeURIComponent("Bu giriş yolu kapalı.")}`);
+  }
+
   const kimlikBilgisi = String(veri.get("kimlikBilgisi") ?? "");
   /*
    * Dönüş yolu, giriş ekranına portaldan gelen kişinin tıkladığı sayfadır
@@ -98,7 +169,11 @@ export async function cikisEylemi(): Promise<void> {
       islem: "CIKIS",
       basarili: true,
       kullaniciId: kullanici.id,
-      saglayici: disKullanici ? "dış kimlik" : "EBA",
+      saglayici: disKullanici
+        ? "dış kimlik"
+        : ortam.AUTH_PROVIDER === "kayit"
+          ? "kayıt"
+          : "EBA",
     });
   }
   await oturumKapat();

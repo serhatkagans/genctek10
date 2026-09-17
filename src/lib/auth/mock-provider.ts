@@ -20,7 +20,7 @@ import type { AuthKimlik, AuthProvider } from "./tipler";
 
 const URETILEN_ONEKI = "uretilen-";
 
-const KIMLIK_ALANLARI = {
+export const KIMLIK_ALANLARI = {
   authProviderId: true,
   ad: true,
   soyad: true,
@@ -51,7 +51,7 @@ type KimlikSatiri = {
  * ayrımla aynı: sınıfı olan öğrenci, okulu olan öğretmen, ikisi de yoksa
  * merkez personeli.
  */
-function satiriKimligeCevir(satir: KimlikSatiri): AuthKimlik {
+export function satiriKimligeCevir(satir: KimlikSatiri): AuthKimlik {
   const tip =
     satir.sinif !== null
       ? "OGRENCI"

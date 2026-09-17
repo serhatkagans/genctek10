@@ -667,6 +667,9 @@ model Kullanici {
   /// kullanıcılarda YOKTUR — şifre yalnızca kimliği AuthProvider'dan gelmeyen
   /// kişilerde vardır.
   disKimlik                 DisKimlik?
+  /// Kayıt formuyla açılmış hesabın şifresi (17 Eylül 2026). EBA SSO gelene
+  /// kadar öğrenci ve öğretmenler kendi kaydını açıyor; bkz. model KayitKimlik.
+  kayitKimlik               KayitKimlik?
   /// Kullanıcıyı doğuran başvuru. Mezun/paydaşın hangi okuldan mezun olduğu
   /// ya da hangi paydaş kurumu temsil ettiği buradan okunur; alanlar kullanıcı
   /// satırına KOPYALANMAZ, tek doğruluk kaynağı başvurudur.
@@ -1036,6 +1039,35 @@ model GencTekGorevBasvurusu {
 /// belirler — kullanıcı tablosuna sütun eklenseydi, boş şifreli bir satırın
 /// giriş yapamayacağını her seferinde uygulama katmanı garanti etmek zorunda
 /// kalırdı.
+/// Kayıtla açılmış öğrenci/öğretmen hesabının şifresi (17 Eylül 2026).
+///
+/// EBA SSO bir süre gelmeyecek; pilot kullanıcılar giriş ekranından kendi
+/// kaydını açıyor (T.C. kimlik no, ad, soyad, il, okul...) ve sonra T.C. kimlik
+/// no + şifreyle giriyor. Giriş adı ayrı tutulmaz: `kullanici.auth_provider_id`
+/// T.C. kimlik numarasının kendisidir (yol haritasındaki karar).
+///
+/// DIS_KIMLIK'TEN AYRI TABLO: o tablo e-postayla giren mezun/paydaş içindir ve
+/// "dış kullanıcı mı" sorusunun ölçütüdür (çıkış yönlendirmesi, yetki). Aynı
+/// tabloya yazılsaydı kayıtlı öğrenci dış kullanıcı sayılırdı. SSO geldiğinde
+/// bu tablo bütünüyle kalkar.
+model KayitKimlik {
+  kullaniciId Int    @id @map("kullanici_id")
+  /// scrypt özeti — biçim: scrypt$N$r$p$tuz$ozet (bkz. lib/dis-kimlik/sifre.ts).
+  sifreOzeti  String @map("sifre_ozeti") @db.VarChar(200)
+
+  /// Kaba kuvvet koruması; kurallar dis_kimlik ile aynı (dis-kimlik/kurallar.ts).
+  basarisizDeneme  Int       @default(0) @map("basarisiz_deneme")
+  kilitBitisTarihi DateTime? @map("kilit_bitis_tarihi") @db.Timestamptz(6)
+
+  sonGirisTarihi   DateTime? @map("son_giris_tarihi") @db.Timestamptz(6)
+  olusturmaTarihi  DateTime  @default(now()) @map("olusturma_tarihi") @db.Timestamptz(6)
+  guncellemeTarihi DateTime  @default(now()) @updatedAt @map("guncelleme_tarihi") @db.Timestamptz(6)
+
+  kullanici Kullanici @relation(fields: [kullaniciId], references: [id], onDelete: Cascade)
+
+  @@map("kayit_kimlik")
+}
+
 model DisKimlik {
   kullaniciId Int    @id @map("kullanici_id")
   /// Küçük harfe indirgenmiş; giriş bununla yapılır.

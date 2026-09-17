@@ -16,7 +16,12 @@ const GELISTIRME_ANAHTARI = "gelistirme-ortami-icin-gecici-anahtar-degistirin";
 
 const semaOrtam = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL tanımlı değil"),
-  AUTH_PROVIDER: z.enum(["mock", "eba"]).default("mock"),
+  /**
+   * "kayit" (17 Eylül 2026): EBA SSO gelene kadar öğrenci ve öğretmen giriş
+   * ekranından kendi kaydını açar, T.C. kimlik no + şifreyle girer
+   * (bkz. auth/kayit-provider.ts). Kimlik seçerek giriş bu kipte kapalıdır.
+   */
+  AUTH_PROVIDER: z.enum(["mock", "eba", "kayit"]).default("mock"),
 
   /**
    * Üretimde mock girişe bilinçli onay.

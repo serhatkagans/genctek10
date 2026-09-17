@@ -299,6 +299,10 @@ describe("kimlik seçerek giriş kapısı", () => {
   test("eba sağlayıcısında kapalıdır", () => {
     expect(kimlikSecerekGirisAcikMi("eba")).toBe(false);
   });
+
+  test("kayıtla giriş kipinde kapalıdır", () => {
+    expect(kimlikSecerekGirisAcikMi("kayit")).toBe(false);
+  });
 });
 
 describe("başvuru girdisi", () => {

@@ -46,6 +46,8 @@ export default async function AcilisSayfasi() {
   }
 
   const mockMu = ortam.AUTH_PROVIDER === "mock";
+  // Kayıt kipi (17 Eylül 2026): EBA SSO yok, kişi kendi kaydını açıyor.
+  const kayitMi = ortam.AUTH_PROVIDER === "kayit";
 
   return (
     <div className="vitrin flex min-h-screen flex-col">
@@ -89,11 +91,22 @@ export default async function AcilisSayfasi() {
             className="flex w-full items-center justify-center gap-2 rounded-kutu bg-vitrin-secili-zemin py-3.5 font-semibold text-vitrin-secili-metin shadow-yuksek transition hover:opacity-90"
           >
             <LogIn size={16} aria-hidden />
-            EBA ile Giriş Yap
+            {kayitMi ? "Öğrenci / Öğretmen Girişi" : "EBA ile Giriş Yap"}
           </Link>
 
           <p className="mt-4 text-xs text-vitrin-metin-yumusak">
-            Öğrenci ve öğretmen kimlik bilgileri EBA üzerinden alınır.
+            {kayitMi ? (
+              <>
+                T.C. kimlik numaranız ve şifrenizle girersiniz. Hesabınız
+                yoksa{" "}
+                <Link href="/kayit" className="font-semibold underline">
+                  kayıt olun
+                </Link>
+                .
+              </>
+            ) : (
+              "Öğrenci ve öğretmen kimlik bilgileri EBA üzerinden alınır."
+            )}
           </p>
 
           {/*

@@ -21,6 +21,7 @@ import { aktifTema } from "@/lib/tema";
 import { guvenliDonusYolu } from "@/lib/auth/donus-yolu";
 import { oturumKullanicisi } from "@/lib/auth/oturum";
 import { girisEylemi } from "./eylemler";
+import { SifreliGiris } from "./SifreliGiris";
 
 /**
  * Giriş ekranı.
@@ -165,9 +166,11 @@ export default async function GirisSayfasi({
      * kullanılmaz; `guvenliDonusYolu` uygulama dışına çıkan her şeyi eler.
      */
     nereye?: string;
+    /** Kayıt formundan dönüşte "kaydınız oluşturuldu" kutusu için. */
+    kayit?: string;
   }>;
 }) {
-  const { hata, ara, tumu, nereye: hamNereye } = await searchParams;
+  const { hata, ara, tumu, nereye: hamNereye, kayit } = await searchParams;
   const nereye = guvenliDonusYolu(hamNereye);
 
   /*
@@ -189,6 +192,21 @@ export default async function GirisSayfasi({
    */
   if (nereye && (await oturumKullanicisi())) {
     redirect(nereye);
+  }
+
+  /*
+   * KAYIT KİPİ (17 Eylül 2026 · istek: "login ekranında kayıt olacak
+   * kullanıcı ve sonra giriş yapacak, mevcut girişi değiştirelim"). Kimlik
+   * listesi hiç çekilmez; aşağıdaki ekran yalnızca mock kipinde basılır.
+   */
+  if (ortam.AUTH_PROVIDER === "kayit") {
+    return (
+      <SifreliGiris
+        hata={hata}
+        kayitTamam={kayit === "tamam"}
+        nereye={nereye}
+      />
+    );
   }
   const aranan = (ara ?? "").trim().toLocaleLowerCase("tr");
   const [tema, kimlikler] = await Promise.all([

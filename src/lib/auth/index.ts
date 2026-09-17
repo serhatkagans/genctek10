@@ -1,5 +1,6 @@
 import { ortam } from "../ortam";
 import { EbaAuthProvider } from "./eba-provider";
+import { KayitAuthProvider } from "./kayit-provider";
 import { MockAuthProvider } from "./mock-provider";
 import type { AuthProvider } from "./tipler";
 
@@ -14,7 +15,9 @@ export function authProvider(): AuthProvider {
     saglayici =
       ortam.AUTH_PROVIDER === "eba"
         ? new EbaAuthProvider()
-        : new MockAuthProvider();
+        : ortam.AUTH_PROVIDER === "kayit"
+          ? new KayitAuthProvider()
+          : new MockAuthProvider();
   }
   return saglayici;
 }

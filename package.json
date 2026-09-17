@@ -21,6 +21,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "veri:ornek": "tsx scripts/ornek-veri.ts",
     "veri:kazanim": "tsx scripts/ornek-kazanim.ts",
+    "kullanici:yonetici": "tsx scripts/yonetici-hesabi.ts",
     "veri:dis-kullanici": "tsx scripts/ornek-dis-kullanici.ts",
     "kisi:disa-aktar": "node scripts/kisi-disa-aktar.cjs",
     "kisi:ice-aktar": "tsx scripts/kisi-ice-aktar.ts",

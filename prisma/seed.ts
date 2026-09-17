@@ -671,7 +671,19 @@ async function main() {
   await temelEtkinlikProgramlariniYukle();
   await sistemAyarlariniYukle();
   await bildirimSablonlariniYukle();
-  await baslangicYoneticileriniOlustur();
+  /*
+   * KAYIT KİPİNDE MOCK YÖNETİCİ AÇILMAZ (17 Eylül 2026). Katalogdaki
+   * yöneticilerin şifresi yok, o kipte giremezler; açılmaları yalnızca
+   * listelerde görünen ölü kayıtlar bırakırdı. İlk yönetici
+   * `npm run kullanici:yonetici` ile açılır.
+   */
+  if ((process.env.AUTH_PROVIDER ?? "mock") === "mock") {
+    await baslangicYoneticileriniOlustur();
+  } else {
+    console.log(
+      "  başlangıç yöneticileri atlandı (AUTH_PROVIDER mock değil) · npm run kullanici:yonetici",
+    );
+  }
   console.log("Seed tamamlandı.");
 }
 

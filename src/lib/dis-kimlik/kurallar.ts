@@ -30,7 +30,7 @@ export const TUR_ETIKETLERI: Record<DisKullaniciTuru, string> = {
  * ekranı gizlemek eylemi korumaz.
  */
 export function kimlikSecerekGirisAcikMi(
-  authSaglayici: "mock" | "eba",
+  authSaglayici: "mock" | "eba" | "kayit",
 ): boolean {
   return authSaglayici === "mock";
 }
@@ -163,7 +163,11 @@ export function sifreKarariniVer(
   if (parcalar.some((parca) => kucuk.includes(parca))) {
     return {
       olurMu: false,
-      neden: "Şifre adınızı, soyadınızı ya da e-posta adınızı içeremez.",
+      // Kayıt formunda e-posta sorulmuyor (kayit/kurallar.ts); mesaj
+      // olmayan bir alanı anmasın.
+      neden: baglam.eposta
+        ? "Şifre adınızı, soyadınızı ya da e-posta adınızı içeremez."
+        : "Şifre adınızı ya da soyadınızı içeremez.",
     };
   }
 
