@@ -55,12 +55,12 @@ export function SifreliGiris({
             <span className="text-sm font-medium text-metin-yumusak">
               T.C. kimlik numarası
             </span>
-            {/* Desen yok: yönetici kullanıcı adıyla da buradan girer. */}
             <input
               name="tcKimlikNo"
               required
-              maxLength={32}
-              autoCapitalize="none"
+              inputMode="numeric"
+              pattern="[0-9 ]{11,14}"
+              maxLength={14}
               autoComplete="username"
               className={SINIF_GIRDI}
             />

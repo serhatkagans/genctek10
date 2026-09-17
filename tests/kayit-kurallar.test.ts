@@ -1,7 +1,6 @@
 import {
   type KayitGirdisi,
   kayitGirdisiniCoz,
-  kullaniciAdiGecerliMi,
   tcKimlikNoGecerliMi,
 } from "@/lib/kayit/kurallar";
 
@@ -105,17 +104,4 @@ describe("kayıt girdisi", () => {
   ])("%s reddedilir", (_ad, degisiklik) => {
     expect(kayitGirdisiniCoz(girdi(degisiklik), SIMDI).olurMu).toBe(false);
   });
-});
-
-describe("yönetici kullanıcı adı", () => {
-  test.each(["admin", "proje.yonetici", "yonetici-2"])("%s geçer", (ad) => {
-    expect(kullaniciAdiGecerliMi(ad)).toBe(true);
-  });
-
-  test.each(["ad", "Admin", "1admin", "10000000146", "admin yonetici"])(
-    "%s reddedilir",
-    (ad) => {
-      expect(kullaniciAdiGecerliMi(ad)).toBe(false);
-    },
-  );
 });

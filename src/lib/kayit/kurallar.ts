@@ -48,18 +48,6 @@ export function tcKimlikNoGecerliMi(deger: string): boolean {
   return ilkOnToplam % 10 === h[10];
 }
 
-/**
- * Yönetici kullanıcı adı ("admin" gibi) biçimi (17 Eylül 2026 · istek:
- * "proje yöneticisi için kullanıcı adı şifre gerek, admin ya da").
- *
- * Yalnızca betikle açılır (scripts/yonetici-hesabi.ts); kayıt formu geçerli
- * T.C. numarası istediği için bu adları kimse formdan alamaz. Harfle
- * başlamak ZORUNLU: rakamdan oluşan bir ad bir T.C. numarasıyla çakışabilirdi.
- */
-export function kullaniciAdiGecerliMi(deger: string): boolean {
-  return /^[a-z][a-z0-9._-]{2,31}$/.test(deger);
-}
-
 /** Boşlukları atar; kişi numarayı "123 456 789 01" diye yazabilir. */
 export function tcKimlikNoNormalle(deger: string): string {
   return deger.replace(/\s+/g, "");

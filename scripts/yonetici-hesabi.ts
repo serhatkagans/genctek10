@@ -2,10 +2,7 @@ import "dotenv/config";
 import { prisma } from "@/lib/db";
 import { sifreOzetle } from "@/lib/dis-kimlik/sifre";
 import { sifreKarariniVer } from "@/lib/dis-kimlik/kurallar";
-import {
-  kullaniciAdiGecerliMi,
-  tcKimlikNoGecerliMi,
-} from "@/lib/kayit/kurallar";
+import { tcKimlikNoGecerliMi } from "@/lib/kayit/kurallar";
 import { kullaniciSagla } from "@/lib/kullanici/sagla";
 import { egitimOgretimYili } from "@/lib/ogretmen/gorev-yillari";
 
@@ -19,9 +16,8 @@ import { egitimOgretimYili } from "@/lib/ogretmen/gorev-yillari";
  * sonrakileri de o atayabilir.
  *
  * İKİ KULLANIM:
- *   1) Yeni personel hesabı (okulsuz) açıp yönetici yap. Giriş adı T.C.
- *      numarası YA DA kullanıcı adı olabilir (--tc yerine --kullanici-adi):
- *        YONETICI_SIFRE='...' npm run kullanici:yonetici -- --kullanici-adi admin --ad Proje --soyad Yöneticisi --cinsiyet K
+ *   1) Yeni personel hesabı (okulsuz) açıp yönetici yap:
+ *        YONETICI_SIFRE='...' npm run kullanici:yonetici -- --tc 1234... --ad Ayşe --soyad Kaya --cinsiyet K
  *   2) Kayıt formuyla zaten açılmış bir hesabı yönetici yap:
  *        npm run kullanici:yonetici -- --tc 1234...
  *
@@ -35,12 +31,9 @@ function arguman(ad: string): string {
 }
 
 async function main() {
-  const kullaniciAdi = arguman("kullanici-adi").toLowerCase();
-  const tc = kullaniciAdi || arguman("tc").replace(/\s+/g, "");
-  if (kullaniciAdi ? !kullaniciAdiGecerliMi(kullaniciAdi) : !tcKimlikNoGecerliMi(tc)) {
-    throw new Error(
-      "--tc geçerli bir T.C. kimlik numarası ya da --kullanici-adi harfle başlayan 3-32 karakter (a-z, 0-9, . _ -) olmalı.",
-    );
+  const tc = arguman("tc").replace(/\s+/g, "");
+  if (!tcKimlikNoGecerliMi(tc)) {
+    throw new Error("--tc geçerli bir T.C. kimlik numarası olmalı.");
   }
 
   let kullanici = await prisma.kullanici.findUnique({
