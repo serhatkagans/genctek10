@@ -32,6 +32,8 @@ import { egitimOgretimYili } from "@/lib/ogretmen/gorev-yillari";
  * Kullanım:
  *   npm run veri:pilot                      üretir, giriş bilgilerini yazar
  *   npm run veri:pilot -- --temizle         bu betiğin ürettiği her şeyi siler
+ *   npm run veri:pilot -- --vitrin          var olan pilot kişilere yalnızca vitrin
+ *                                           ürünlerini ekler (şifrelere dokunmaz)
  *   npm run veri:pilot -- --kurum-06=750003 --kurum-34=750001
  *                                           okulları elle seçer (varsayılan:
  *                                           o ilin kurum kodu en küçük aktif okulu)
@@ -922,7 +924,7 @@ interface KazanimTanimi {
 const KAZANIMLAR: KazanimTanimi[] = [
   // Elif (Ankara öğrencisi)
   { kisi: "ank-ogrenci", tip: "YARISMA_DERECESI", baslik: "Hack The Idea Ankara — İl Üçüncülüğü", derece: "İl 3.'sü", duzenleyen: "Ankara GençTek İl Koordinatörlüğü", tarih: "2026-05-17", aciklama: "Akıllı durak projesiyle takım olarak il üçüncüsü olduk." },
-  { kisi: "ank-ogrenci", tip: "URUN", baslik: "Akıllı Sera Otomasyonu", aciklama: "Arduino ve nem sensörüyle otomatik sulama yapan mini sera. Kodu açık kaynak.", tarih: "2026-04-30", gelistirenEkip: "Elif Yıldız, okul robotik takımı", hedefKitle: "Okul bahçeleri ve sınıf içi deneyler", baglantiUrl: "https://github.com/ornek/akilli-sera" },
+  { kisi: "ank-ogrenci", tip: "URUN", baslik: "Akıllı Sera Otomasyonu", aciklama: "Arduino ve nem sensörüyle otomatik sulama yapan mini sera. Kodu açık kaynak.", tarih: "2026-04-30", gelistirenEkip: "Elif Yıldız, okul robotik takımı", hedefKitle: "Okul bahçeleri ve sınıf içi deneyler", baglantiUrl: "https://kod.ornek.example/elif/akilli-sera" },
   { kisi: "ank-ogrenci", tip: "SERTIFIKA", baslik: "Python ile Programlamaya Giriş", duzenleyen: "Çevrim içi eğitim platformu", bicim: "ONLINE", tarih: "2026-02-11" },
   { kisi: "ank-ogrenci", tip: "DIS_ETKINLIK", baslik: "TEKNOFEST Robotaksi Yarışması — izleyici katılım", duzenleyen: "TEKNOFEST", bicim: "YUZ_YUZE", tarih: "2025-09-20" },
   { kisi: "ank-ogrenci", tip: "AKRAN_EGITIMI", baslik: "9. sınıflara Scratch oturumu", aciklama: "İki ders saati boyunca 22 öğrenciye blok kodlamayla oyun yapmayı anlattım.", bicim: "YUZ_YUZE", hedefKitle: "9. sınıf öğrencileri", tarih: "2026-03-05" },
@@ -970,12 +972,244 @@ const GONDERILER: { kisi: string; icerik: string; tarih: string; yorumlar?: [str
 ];
 
 // ---------------------------------------------------------------------------
+// Vitrin (ürün marketi)
+// ---------------------------------------------------------------------------
+
+/**
+ * Vitrine çıkan ürünler. Ürün, URUN tipli bir kazanımdır; vitrinde görünmesi
+ * için paylaşım işareti ve proje yöneticisi onayı gerekir (bkz.
+ * lib/market/kurallar.ts · urunVitrindeMi).
+ *
+ * `onay: "BEKLIYOR"` olan ürün yöneticinin vitrin sayfasındaki onay
+ * kuyruğuna düşer — kuyruk da tanıtımda görünsün diye bir tane bırakıldı.
+ *
+ * Bağlantılar `.example` alan adındadır: gerçek bir siteye (ya da gerçek bir
+ * GitHub kullanıcısına) çıkmasın diye.
+ */
+interface VitrinUrunu {
+  kisi: string;
+  baslik: string;
+  aciklama: string;
+  tarih: string;
+  gelistirenEkip: string;
+  hedefKitle: string;
+  baglantilar: [etiket: string, adres: string][];
+  onay?: "ONAYLANDI" | "BEKLIYOR";
+  goruntulenme: number;
+  tiklama: number;
+}
+
+const VITRIN: VitrinUrunu[] = [
+  {
+    kisi: "ank-ogrenci",
+    baslik: "Akıllı Sera Otomasyonu",
+    aciklama:
+      "Arduino, toprak nem sensörü ve röleyle çalışan otomatik sulama sistemi. Nem eşiğin altına düşünce pompa çalışıyor, ölçümler SD karta kaydediliyor. Devre şeması ve kod açık kaynak.",
+    tarih: "2026-04-30",
+    gelistirenEkip: "Elif Yıldız, okul robotik takımı",
+    hedefKitle: "Okul bahçeleri ve sınıf içi deneyler",
+    baglantilar: [
+      ["Kaynak kod", "https://kod.ornek.example/elif/akilli-sera"],
+      ["Tanıtım videosu", "https://video.ornek.example/akilli-sera"],
+    ],
+    goruntulenme: 142,
+    tiklama: 37,
+  },
+  {
+    kisi: "ank-ogrenci",
+    baslik: "Sınıf Hava Kalitesi Ölçer",
+    aciklama:
+      "CO₂ ve sıcaklık sensörüyle sınıftaki hava kalitesini ölçen, eşik aşılınca 'pencereyi aç' uyarısı veren cihaz. Ölçümler okul ağındaki basit bir web panelinde izleniyor.",
+    tarih: "2026-09-05",
+    gelistirenEkip: "Elif Yıldız, Selin Korkmaz (danışman)",
+    hedefKitle: "Okullar, sınıf öğretmenleri",
+    baglantilar: [["Proje sayfası", "https://proje.ornek.example/hava-kalitesi"]],
+    goruntulenme: 64,
+    tiklama: 12,
+  },
+  {
+    kisi: "ank-ogrenci",
+    baslik: "Engel Algılayan Akıllı Baston Prototipi",
+    aciklama:
+      "Ultrasonik sensörle önündeki engeli algılayıp titreşimle uyaran baston başlığı. Hack The Idea Ankara'da geliştirilen fikrin çalışan ilk prototipi.",
+    tarih: "2026-06-20",
+    gelistirenEkip: "Elif Yıldız ve Hack The Idea takımı",
+    hedefKitle: "Görme engelli bireyler",
+    baglantilar: [["Tasarım belgesi", "https://belge.ornek.example/akilli-baston"]],
+    goruntulenme: 211,
+    tiklama: 58,
+  },
+  {
+    kisi: "ist-ogrenci",
+    baslik: "Kulüpler Web Sitesi",
+    aciklama:
+      "Okul kulüplerinin tanıtıldığı ve öğrencilerin kulüplere çevrim içi başvurduğu site. Erişilebilirlik denetiminden geçti, mobil uyumlu.",
+    tarih: "2026-04-03",
+    gelistirenEkip: "Web programlama kulübü",
+    hedefKitle: "Okul öğrencileri ve kulüp danışmanları",
+    baglantilar: [
+      ["Canlı site", "https://kulupler.ornek-okul.example"],
+      ["Kaynak kod", "https://kod.ornek.example/web-kulubu/kulupler"],
+    ],
+    goruntulenme: 178,
+    tiklama: 49,
+  },
+  {
+    kisi: "ist-ogrenci",
+    baslik: "Parola Gücü Ölçer Tarayıcı Eklentisi",
+    aciklama:
+      "Yazdığınız parolanın tahmin edilme süresini tarayıcıda, hiçbir yere göndermeden hesaplayan eklenti. Zayıf parolada neden zayıf olduğunu da açıklıyor.",
+    tarih: "2026-08-14",
+    gelistirenEkip: "Arda Çelik",
+    hedefKitle: "Öğrenciler, öğretmenler, veliler",
+    baglantilar: [["Eklenti sayfası", "https://eklenti.ornek.example/parola-olcer"]],
+    goruntulenme: 96,
+    tiklama: 31,
+  },
+  {
+    kisi: "ist-ogrenci",
+    baslik: "CTF Başlangıç Rehberi",
+    aciklama:
+      "Bayrak yakalama yarışmalarına yeni başlayanlar için kategori kategori çözümlü alıştırmalar ve araç listesi.",
+    tarih: "2026-09-21",
+    gelistirenEkip: "Arda Çelik ve CTF takımı",
+    hedefKitle: "Siber güvenliğe ilgi duyan lise öğrencileri",
+    baglantilar: [["Rehber", "https://rehber.ornek.example/ctf-baslangic"]],
+    // Yöneticinin onay kuyruğunda görünsün.
+    onay: "BEKLIYOR",
+    goruntulenme: 0,
+    tiklama: 0,
+  },
+  {
+    kisi: "ist-ogretmen",
+    baslik: "Kantin Ön Sipariş Uygulaması",
+    aciklama:
+      "Teneffüs kuyruğunu azaltmak için öğrencilerin kantine ders arasında sipariş verdiği mobil uygulama. Mobil programlama kulübü öğrencileriyle geliştirildi, okulda pilot olarak kullanılıyor.",
+    tarih: "2026-06-10",
+    gelistirenEkip: "Kerem Şahin ve mobil programlama kulübü",
+    hedefKitle: "Okullar",
+    baglantilar: [
+      ["Uygulama sayfası", "https://uygulama.ornek.example/kantin"],
+      ["Kaynak kod", "https://kod.ornek.example/mobil-kulup/kantin"],
+    ],
+    goruntulenme: 233,
+    tiklama: 71,
+  },
+  {
+    kisi: "ank-ogretmen",
+    baslik: "Robotik Atölyesi Ders Planları",
+    aciklama:
+      "12 haftalık, açık lisanslı Arduino atölye planları: her hafta için hedef, malzeme listesi, devre şeması ve değerlendirme ölçeği.",
+    tarih: "2026-01-15",
+    gelistirenEkip: "Selin Korkmaz",
+    hedefKitle: "Bilişim ve teknoloji tasarım öğretmenleri",
+    baglantilar: [["Ders planları", "https://belge.ornek.example/robotik-ders-planlari"]],
+    goruntulenme: 305,
+    tiklama: 122,
+  },
+];
+
+/**
+ * Pilot kişilerin ürünlerini vitrine koyar. Yeniden çalıştırılabilir: aynı
+ * başlıklı ürün varsa güncellenir, yoksa açılır (ilk çalıştırmada KAZANIMLAR
+ * listesinden gelen ürünler de böylece vitrine taşınır).
+ */
+async function vitrineKoy(kisiIdleri: Record<string, number>) {
+  const projeYoneticisi = await prisma.kullaniciRol.findFirst({
+    where: { rolKodu: "PROJE_YONETICISI", bitisTarihi: null },
+    orderBy: { baslangicTarihi: "asc" },
+    select: { kullaniciId: true },
+  });
+
+  let yayinda = 0;
+  let bekleyen = 0;
+  for (const u of VITRIN) {
+    const kullaniciId = kisiIdleri[u.kisi];
+    const onay = u.onay ?? "ONAYLANDI";
+    const tarih = gun(u.tarih);
+    const alanlar = {
+      aciklama: u.aciklama,
+      tarih,
+      gelistirenEkip: u.gelistirenEkip,
+      hedefKitle: u.hedefKitle,
+      // Eski tek alanlı bağlantı boşaltılır; bağlantılar kendi tablosunda.
+      baglantiUrl: null,
+      markettePaylasilsin: true,
+      marketOnayDurumu: onay,
+      marketKararVerenKullaniciId:
+        onay === "ONAYLANDI" ? (projeYoneticisi?.kullaniciId ?? null) : null,
+      marketKararTarihi: onay === "ONAYLANDI" ? gunEkle(tarih, 2) : null,
+      marketRetGerekcesi: null,
+      goruntulenmeSayisi: u.goruntulenme,
+      baglantiTiklamasi: u.tiklama,
+    };
+
+    const mevcut = await prisma.kullaniciKazanim.findFirst({
+      where: { kullaniciId, tip: "URUN", baslik: u.baslik },
+      select: { id: true },
+    });
+    const kazanimId = mevcut
+      ? (await prisma.kullaniciKazanim.update({ where: { id: mevcut.id }, data: alanlar })).id
+      : (
+          await prisma.kullaniciKazanim.create({
+            data: {
+              ...alanlar,
+              kullaniciId,
+              tip: "URUN",
+              baslik: u.baslik,
+              olusturmaTarihi: gunEkle(tarih, 1),
+            },
+          })
+        ).id;
+
+    await prisma.kazanimBaglanti.deleteMany({ where: { kazanimId } });
+    await prisma.kazanimBaglanti.createMany({
+      data: u.baglantilar.map(([etiket, adres], siraNo) => ({
+        kazanimId,
+        etiket,
+        adres,
+        siraNo,
+      })),
+    });
+    if (onay === "ONAYLANDI") yayinda += 1;
+    else bekleyen += 1;
+  }
+
+  if (!projeYoneticisi) {
+    console.warn("   Uyarı: aktif proje yöneticisi yok; onay kararı karar verensiz yazıldı.");
+  }
+  console.log(`   ${yayinda} ürün vitrinde · ${bekleyen} ürün onay bekliyor`);
+}
+
+// ---------------------------------------------------------------------------
 // Ana akış
 // ---------------------------------------------------------------------------
 
 async function main() {
   if (process.argv.includes("--temizle")) {
     await uretilenleriSil();
+    return;
+  }
+
+  // Var olan pilot kişilere yalnızca vitrin ürünlerini ekler; şifrelere dokunmaz.
+  if (process.argv.includes("--vitrin")) {
+    const kayitlilar = await prisma.kullanici.findMany({
+      where: { authProviderId: { in: KISILER.map((k) => k.tc) } },
+      select: { id: true, authProviderId: true },
+    });
+    if (kayitlilar.length !== KISILER.length) {
+      console.error("Pilot kişiler bulunamadı; önce: npm run veri:pilot");
+      process.exitCode = 1;
+      return;
+    }
+    const idler = Object.fromEntries(
+      KISILER.map((k) => [
+        k.anahtar,
+        kayitlilar.find((x) => x.authProviderId === k.tc)!.id,
+      ]),
+    );
+    console.log("Vitrin");
+    await vitrineKoy(idler);
     return;
   }
 
@@ -1225,6 +1459,11 @@ async function main() {
     }
   }
   console.log(`   ${GONDERILER.length} gönderi · ${gonderiYorumu} yorum`);
+
+  console.log("7. Vitrin");
+  await vitrineKoy(
+    Object.fromEntries(Object.values(kisiler).map((k) => [k.anahtar, k.id])),
+  );
 
   // Giriş bilgileri — yalnızca burada görünür, hiçbir yere yazılmaz.
   console.log("\nGiriş bilgileri (T.C. + şifre):");
